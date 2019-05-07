@@ -403,6 +403,8 @@ func init() {
 	flag.Var(&logging.vmodule, "vmodule", "comma-separated list of pattern=N settings for file-filtered logging")
 	flag.Var(&logging.traceLocation, "log_backtrace_at", "when logging hits line file:N, emit a stack trace")
 
+	flag.Uint64Var(&logging.maxSizePerFile, "max_size_per_file", MaxSize, "max size in bytes per file")
+
 	// Default stderrThreshold is ERROR.
 	logging.stderrThreshold = errorLog
 
@@ -453,6 +455,9 @@ type loggingT struct {
 	// safely using atomic.LoadInt32.
 	vmodule   moduleSpec // The state of the -vmodule flag.
 	verbosity Level      // V logging level, the value of the -v flag/
+
+	// max size in bytes per file
+	maxSizePerFile uint64
 }
 
 // buffer holds a byte Buffer for reuse. The zero value is ready for use.
@@ -812,7 +817,7 @@ func (sb *syncBuffer) Sync() error {
 }
 
 func (sb *syncBuffer) Write(p []byte) (n int, err error) {
-	if sb.nbytes+uint64(len(p)) >= MaxSize {
+	if sb.nbytes+uint64(len(p)) >= logging.maxSizePerFile {
 		if err := sb.rotateFile(time.Now()); err != nil {
 			sb.logger.exit(err)
 		}
