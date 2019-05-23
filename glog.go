@@ -691,7 +691,6 @@ func (l *loggingT) output(s severity, buf *buffer, file string, line int, alsoTo
 			switch s {
 			case infoLog, warningLog:
 				os.Stdout.Write(data)
-			case fatalLog, errorLog:
 			default:
 				os.Stderr.Write(data)
 			}
